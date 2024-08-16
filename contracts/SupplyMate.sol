@@ -83,35 +83,24 @@ contract SupplyMateNFT is ERC721, Ownable {
         return ownedNFTs;
     }
 
-    function transferNFT(
-        uint256 _tokenId,
-        string memory _newDescription,
-        string memory _newLocation,
-        address _newNextOwner
-    ) public {
-        require(_ownerOf(_tokenId) != address(0), "NFT does not exist");
-        require(ownerOf(_tokenId) == msg.sender, "Only the current owner can transfer this NFT");
-        require(bytes(_newLocation).length > 0, "Location must be provided");
-        require(_newNextOwner != address(0), "Next owner must be a valid address");
+function transferNFT(uint256 _tokenId, address _newNextOwner) public {
+    require(_ownerOf(_tokenId) != address(0), "NFT does not exist");
+    require(ownerOf(_tokenId) == msg.sender, "Only the current owner can transfer this NFT");
+    require(_newNextOwner != address(0), "Next owner must be a valid address");
 
-        // Update the currentOwner to the previous nextOwner
-        address previousNextOwner = _nftDetails[_tokenId].nextOwner;
-        _nftDetails[_tokenId].currentOwner = previousNextOwner;
+    // Update the currentOwner to the previous nextOwner
+    address previousNextOwner = _nftDetails[_tokenId].nextOwner;
+    _nftDetails[_tokenId].currentOwner = previousNextOwner;
 
-        // Update the description only if a new description is provided
-        if (bytes(_newDescription).length > 0) {
-            _nftDetails[_tokenId].description = _newDescription;
-        }
+    // Update the next owner to the new next owner
+    _nftDetails[_tokenId].nextOwner = _newNextOwner;
 
-        // Update the location and next owner
-        _nftDetails[_tokenId].location = _newLocation;
-        _nftDetails[_tokenId].nextOwner = _newNextOwner;
+    // Transfer the NFT to the previous next owner
+    _transfer(msg.sender, previousNextOwner, _tokenId);
 
-        // Transfer the NFT
-        _transfer(msg.sender, _newNextOwner, _tokenId);
+    emit NFTTransferred(_tokenId, msg.sender, _newNextOwner);
+}
 
-        emit NFTTransferred(_tokenId, msg.sender, _newNextOwner);
-    }
 
     function burnNFT(uint256 _tokenId) public {
         require(ownerOf(_tokenId) == msg.sender, "Only the owner can burn this NFT");
@@ -119,20 +108,5 @@ contract SupplyMateNFT is ERC721, Ownable {
         delete _nftDetails[_tokenId];
 
         emit NFTBurned(_tokenId);
-    }
-
-    function updateNFTDetails(
-        uint256 _tokenId,
-        string memory _newDescription,
-        string memory _newLocation,
-        address _newNextOwner
-    ) public {
-        require(ownerOf(_tokenId) == msg.sender, "Only the owner can update NFT details");
-        NFTDetails storage details = _nftDetails[_tokenId];
-        details.description = _newDescription;
-        details.location = _newLocation;
-        details.nextOwner = _newNextOwner;
-
-        emit NFTDetailsUpdated(_tokenId);
     }
 }
