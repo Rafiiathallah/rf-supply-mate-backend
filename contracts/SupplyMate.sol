@@ -57,6 +57,32 @@ contract SupplyMateNFT is ERC721, Ownable {
         return _nftDetails[_tokenId];
     }
 
+    function viewNFTsByOwner(address _owner) public view returns (NFTDetails[] memory) {
+        uint256 totalNFTs = _tokenIds;
+        uint256 ownedNFTCount = 0;
+        uint256 currentIndex = 0;
+
+        // First, count the number of NFTs owned by the owner
+        for (uint256 i = 1; i <= totalNFTs; i++) {
+            if (_ownerOf(i) == _owner) {
+                ownedNFTCount += 1;
+            }
+        }
+
+        // Initialize an array to hold the owner's NFTs
+        NFTDetails[] memory ownedNFTs = new NFTDetails[](ownedNFTCount);
+
+        // Populate the array with the owner's NFTs
+        for (uint256 i = 1; i <= totalNFTs; i++) {
+            if (_ownerOf(i) == _owner) {
+                ownedNFTs[currentIndex] = _nftDetails[i];
+                currentIndex += 1;
+            }
+        }
+
+        return ownedNFTs;
+    }
+
     function transferNFT(address _to, uint256 _tokenId) public {
         require(_ownerOf(_tokenId) != address(0), "NFT does not exist");
         require(ownerOf(_tokenId) == msg.sender, "Only the current owner can transfer this NFT");
