@@ -83,15 +83,34 @@ contract SupplyMateNFT is ERC721, Ownable {
         return ownedNFTs;
     }
 
-    function transferNFT(address _to, uint256 _tokenId) public {
+    function transferNFT(
+        uint256 _tokenId,
+        string memory _newDescription,
+        string memory _newLocation,
+        address _newNextOwner
+    ) public {
         require(_ownerOf(_tokenId) != address(0), "NFT does not exist");
         require(ownerOf(_tokenId) == msg.sender, "Only the current owner can transfer this NFT");
+        require(bytes(_newLocation).length > 0, "Location must be provided");
+        require(_newNextOwner != address(0), "Next owner must be a valid address");
 
-        _transfer(msg.sender, _to, _tokenId);
-        _nftDetails[_tokenId].currentOwner = _to;
-        _nftDetails[_tokenId].nextOwner = address(0); // Resetting next owner
+        // Update the currentOwner to the previous nextOwner
+        address previousNextOwner = _nftDetails[_tokenId].nextOwner;
+        _nftDetails[_tokenId].currentOwner = previousNextOwner;
 
-        emit NFTTransferred(_tokenId, msg.sender, _to);
+        // Update the description only if a new description is provided
+        if (bytes(_newDescription).length > 0) {
+            _nftDetails[_tokenId].description = _newDescription;
+        }
+
+        // Update the location and next owner
+        _nftDetails[_tokenId].location = _newLocation;
+        _nftDetails[_tokenId].nextOwner = _newNextOwner;
+
+        // Transfer the NFT
+        _transfer(msg.sender, _newNextOwner, _tokenId);
+
+        emit NFTTransferred(_tokenId, msg.sender, _newNextOwner);
     }
 
     function burnNFT(uint256 _tokenId) public {
